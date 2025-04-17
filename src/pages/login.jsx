@@ -1,7 +1,8 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import axios from "axios"
 import { Mail, LockKeyhole, AlertCircle } from "lucide-react"
+import axiosInstance from '../api/axiosInstance';
+import { jwtDecode } from "jwt-decode";
 
 const Login = () => {
   const [email, setEmail] = useState("")
@@ -24,14 +25,14 @@ const Login = () => {
 
     setIsLoading(true)
     try {
-      const response = await axios.post("http://localhost:5001/api/auth/login", {
+      const response = await axiosInstance.post('/auth/login', {
         email,
         password,
       })
 
       localStorage.setItem("token", response.data.token)
       console.log("Connexion réussie !")
-      navigate("/dashboard")
+      navigate("/employer/dashboard")
     } catch (error) {
       if (error.response) {
         setErrors({ general: error.response.data.message || "Login failed" })
