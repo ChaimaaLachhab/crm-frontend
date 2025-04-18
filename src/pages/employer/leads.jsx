@@ -1,32 +1,29 @@
-"use client"
-
-import { useState, useEffect } from "react"
-import axiosInstance from '../../api/axiosInstance';
-import DashboardLayout from "../../components/layout/dashboard-layout"
-import { Plus, Edit, Trash2, X, Check, Search, Filter } from "lucide-react"
+import { useState, useEffect } from "react";
+import axiosInstance from "../../api/axiosInstance";
+import DashboardLayout from "../../components/layout/dashboard-layout";
+import { Plus, Edit, Trash2, X, Check, Search, Filter } from "lucide-react";
 
 const LeadsPage = () => {
-  const [leads, setLeads] = useState([])
-  const [managers, setManagers] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [currentLead, setCurrentLead] = useState(null)
+  const [leads, setLeads] = useState([]);
+  const [managers, setManagers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentLead, setCurrentLead] = useState(null);
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    company: "",
-    status: "new",
-    assignedTo: "",
+    contactName: "",
+    contactEmail: "",
+    companyName: "",
+    status: "PENDING",
+    managerId: "",
     notes: "",
-  })
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
+  });
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const fetchData = async () => {
     try {
-      const token = localStorage.getItem("token")
+      const token = localStorage.getItem("token");
 
       const [leadsResponse, managersResponse] = await Promise.all([
         axiosInstance.get("/employer/leads", {
@@ -35,135 +32,142 @@ const LeadsPage = () => {
         axiosInstance.get("/employer/managers", {
           headers: { Authorization: `Bearer ${token}` },
         }),
-      ])
+      ]);
 
-      setLeads(leadsResponse.data)
-      setManagers(managersResponse.data)
-      setLoading(false)
+      setLeads(leadsResponse.data);
+      setManagers(managersResponse.data);
+      setLoading(false);
     } catch (err) {
-      setError("Failed to load data")
-      setLoading(false)
-      console.error("Error fetching data:", err)
+      setError("Failed to load data");
+      setLoading(false);
+      console.error("Error fetching data:", err);
     }
-  }
+  };
 
   useEffect(() => {
-    fetchData()
-  }, [])
+    fetchData();
+  }, []);
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target
+    const { name, value } = e.target;
     setFormData({
       ...formData,
       [name]: value,
-    })
-  }
+    });
+  };
 
   const openModal = (lead = null) => {
     if (lead) {
-      setCurrentLead(lead)
+      setCurrentLead(lead);
       setFormData({
-        name: lead.name,
-        email: lead.email,
-        phone: lead.phone || "",
-        company: lead.company || "",
-        status: lead.status,
-        assignedTo: lead.assignedTo?._id || "",
-        notes: lead.notes || "",
-      })
+        contactName: lead.contactName || "",
+        contactEmail: lead.contactEmail || "",
+        companyName: lead.companyName || "",
+        status: lead.status || "PENDING",
+        managerId: lead.managerId || "",
+        notes: lead.notes?.join(", ") || "",
+      });
     } else {
-      setCurrentLead(null)
+      setCurrentLead(null);
       setFormData({
-        name: "",
-        email: "",
-        phone: "",
-        company: "",
-        status: "new",
-        assignedTo: "",
+        contactName: "",
+        contactEmail: "",
+        companyName: "",
+        status: "PENDING",
+        managerId: "",
         notes: "",
-      })
+      });
     }
-    setIsModalOpen(true)
-  }
+    setIsModalOpen(true);
+  };
 
   const closeModal = () => {
-    setIsModalOpen(false)
-    setCurrentLead(null)
-  }
+    setIsModalOpen(false);
+    setCurrentLead(null);
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
 
     try {
-      const token = localStorage.getItem("token")
+      const token = localStorage.getItem("token");
 
       if (currentLead) {
         // Update existing lead
-        await axiosInstance.put(`/employer/leads/${currentLead._id}`, formData, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
+        await axiosInstance.put(
+          `/employer/leads/${currentLead._id}`,
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
       } else {
         // Create new lead
         await axiosInstance.post("/employer/leads", formData, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        })
+        });
       }
 
-      fetchData()
-      closeModal()
+      fetchData();
+      closeModal();
     } catch (err) {
-      console.error("Error saving lead:", err)
-      setError(err.response?.data?.message || "Failed to save lead")
+      console.error("Error saving lead:", err);
+      setError(err.response?.data?.message || "Failed to save lead");
     }
-  }
+  };
 
   const handleDelete = async (leadId) => {
     if (window.confirm("Are you sure you want to delete this lead?")) {
       try {
-        const token = localStorage.getItem("token")
+        const token = localStorage.getItem("token");
         await axiosInstance.delete(`/employer/leads/${leadId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        })
+        });
 
-        fetchData()
+        fetchData();
       } catch (err) {
-        console.error("Error deleting lead:", err)
-        setError(err.response?.data?.message || "Failed to delete lead")
+        console.error("Error deleting lead:", err);
+        setError(err.response?.data?.message || "Failed to delete lead");
       }
     }
-  }
+  };
 
   const filteredLeads = leads.filter((lead) => {
+    const name = lead.contactName?.toLowerCase() || "";
+    const email = lead.contactEmail?.toLowerCase() || "";
+    const company = lead.companyName?.toLowerCase() || "";
+
     const matchesSearch =
-      lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lead.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (lead.company && lead.company.toLowerCase().includes(searchTerm.toLowerCase()))
+      name.includes(searchTerm.toLowerCase()) ||
+      email.includes(searchTerm.toLowerCase()) ||
+      company.includes(searchTerm.toLowerCase());
 
-    const matchesStatus = statusFilter === "all" || lead.status === statusFilter
+    const matchesStatus =
+      statusFilter === "all" || lead.status === statusFilter;
 
-    return matchesSearch && matchesStatus
-  })
+    return matchesSearch && matchesStatus;
+  });
 
   const getStatusBadgeClass = (status) => {
     switch (status) {
-      case "new":
-        return "bg-blue-100 text-blue-800"
-      case "in-progress":
-        return "bg-yellow-100 text-yellow-800"
-      case "completed":
-        return "bg-green-100 text-green-800"
-      case "canceled":
-        return "bg-red-100 text-red-800"
+      case "PENDING":
+        return "bg-blue-100 text-blue-800";
+      case "IN_PROGRESS":
+        return "bg-yellow-100 text-yellow-800";
+      case "COMPLETED":
+        return "bg-green-100 text-green-800";
+      case "CANCELED":
+        return "bg-red-100 text-red-800";
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-gray-100 text-gray-800";
     }
-  }
+  };
 
   if (loading) {
     return (
@@ -172,7 +176,7 @@ const LeadsPage = () => {
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
         </div>
       </DashboardLayout>
-    )
+    );
   }
 
   return (
@@ -229,10 +233,10 @@ const LeadsPage = () => {
               onChange={(e) => setStatusFilter(e.target.value)}
             >
               <option value="all">All Statuses</option>
-              <option value="new">New</option>
-              <option value="in-progress">In Progress</option>
-              <option value="completed">Completed</option>
-              <option value="canceled">Canceled</option>
+              <option value="PENDING">Pending</option>
+              <option value="IN_PROGRESS">In Progress</option>
+              <option value="COMPLETED">Completed</option>
+              <option value="CANCELED">Canceled</option>
             </select>
           </div>
         </div>
@@ -245,12 +249,19 @@ const LeadsPage = () => {
                   <div className="px-4 py-4 sm:px-6">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
-                        <p className="text-lg font-medium text-blue-600 truncate">{lead.name}</p>
+                        <p className="text-lg font-medium text-blue-600 truncate">
+                          {lead.contactName}
+                        </p>
                         <div className="ml-2 flex-shrink-0 flex">
                           <p
-                            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(lead.status)}`}
+                            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(
+                              lead.status
+                            )}`}
                           >
-                            {lead.status.charAt(0).toUpperCase() + lead.status.slice(1).replace("-", " ")}
+                            {lead.status
+                              .replace("_", " ")
+                              .toLowerCase()
+                              .replace(/\b\w/g, (c) => c.toUpperCase())}
                           </p>
                         </div>
                       </div>
@@ -274,28 +285,33 @@ const LeadsPage = () => {
                     <div className="mt-2 sm:flex sm:justify-between">
                       <div className="sm:flex sm:space-x-6">
                         <div className="flex items-center text-sm text-gray-500">
-                          <span>Email: {lead.email}</span>
+                          <span>Contact Name: {lead.contactName}</span>
                         </div>
-                        {lead.phone && (
+                        {lead.contactName && (
                           <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
-                            <span>Phone: {lead.phone}</span>
+                            <span>Contact Email: {lead.contactEmail}</span>
                           </div>
                         )}
-                        {lead.company && (
+                        {lead.companyName && (
                           <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
-                            <span>Company: {lead.company}</span>
+                            <span>Company Name: {lead.companyName}</span>
                           </div>
                         )}
                       </div>
                       <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
-                        <span>Assigned to: {lead.assignedTo ? lead.assignedTo.name : "Unassigned"}</span>
+                        <span>
+                          Assigned to:{" "}
+                          {lead.managerId ? lead.managerId : "Unassigned"}
+                        </span>
                       </div>
                     </div>
                   </div>
                 </li>
               ))
             ) : (
-              <li className="px-4 py-6 text-center text-gray-500">No leads found. Add a new lead to get started.</li>
+              <li className="px-4 py-6 text-center text-gray-500">
+                No leads found. Add a new lead to get started.
+              </li>
             )}
           </ul>
         </div>
@@ -305,11 +321,17 @@ const LeadsPage = () => {
       {isModalOpen && (
         <div className="fixed z-10 inset-0 overflow-y-auto">
           <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div className="fixed inset-0 transition-opacity" aria-hidden="true">
+            <div
+              className="fixed inset-0 transition-opacity"
+              aria-hidden="true"
+            >
               <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
             </div>
 
-            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">
+            <span
+              className="hidden sm:inline-block sm:align-middle sm:h-screen"
+              aria-hidden="true"
+            >
               &#8203;
             </span>
 
@@ -324,14 +346,17 @@ const LeadsPage = () => {
                       <form onSubmit={handleSubmit}>
                         <div className="space-y-4">
                           <div>
-                            <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                            <label
+                              htmlFor="contactName"
+                              className="block text-sm font-medium text-gray-700"
+                            >
                               Name *
                             </label>
                             <input
                               type="text"
-                              name="name"
-                              id="name"
-                              value={formData.name}
+                              name="contactName"
+                              id="contactName"
+                              value={formData.contactName}
                               onChange={handleInputChange}
                               required
                               className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
@@ -339,14 +364,17 @@ const LeadsPage = () => {
                           </div>
 
                           <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                            <label
+                              htmlFor="contactEmail"
+                              className="block text-sm font-medium text-gray-700"
+                            >
                               Email *
                             </label>
                             <input
                               type="email"
-                              name="email"
-                              id="email"
-                              value={formData.email}
+                              name="contactEmail"
+                              id="contactEmail"
+                              value={formData.contactEmail}
                               onChange={handleInputChange}
                               required
                               className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
@@ -354,35 +382,27 @@ const LeadsPage = () => {
                           </div>
 
                           <div>
-                            <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-                              Phone
-                            </label>
-                            <input
-                              type="text"
-                              name="phone"
-                              id="phone"
-                              value={formData.phone}
-                              onChange={handleInputChange}
-                              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                            />
-                          </div>
-
-                          <div>
-                            <label htmlFor="company" className="block text-sm font-medium text-gray-700">
+                            <label
+                              htmlFor="companyName"
+                              className="block text-sm font-medium text-gray-700"
+                            >
                               Company
                             </label>
                             <input
                               type="text"
-                              name="company"
-                              id="company"
-                              value={formData.company}
+                              name="companyName"
+                              id="companyName"
+                              value={formData.companyName}
                               onChange={handleInputChange}
                               className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                             />
                           </div>
 
                           <div>
-                            <label htmlFor="status" className="block text-sm font-medium text-gray-700">
+                            <label
+                              htmlFor="status"
+                              className="block text-sm font-medium text-gray-700"
+                            >
                               Status *
                             </label>
                             <select
@@ -393,21 +413,24 @@ const LeadsPage = () => {
                               required
                               className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                             >
-                              <option value="new">New</option>
-                              <option value="in-progress">In Progress</option>
-                              <option value="completed">Completed</option>
-                              <option value="canceled">Canceled</option>
+                              <option value="PENDING">Pending</option>
+                              <option value="IN_PROGRESS">In Progress</option>
+                              <option value="COMPLETED">Completed</option>
+                              <option value="CANCELED">Canceled</option>
                             </select>
                           </div>
 
                           <div>
-                            <label htmlFor="assignedTo" className="block text-sm font-medium text-gray-700">
+                            <label
+                              htmlFor="managerId"
+                              className="block text-sm font-medium text-gray-700"
+                            >
                               Assign to Manager
                             </label>
                             <select
-                              id="assignedTo"
-                              name="assignedTo"
-                              value={formData.assignedTo}
+                              id="managerId"
+                              name="managerId"
+                              value={formData.managerId}
                               onChange={handleInputChange}
                               className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                             >
@@ -421,7 +444,10 @@ const LeadsPage = () => {
                           </div>
 
                           <div>
-                            <label htmlFor="notes" className="block text-sm font-medium text-gray-700">
+                            <label
+                              htmlFor="notes"
+                              className="block text-sm font-medium text-gray-700"
+                            >
                               Notes
                             </label>
                             <textarea
@@ -462,7 +488,7 @@ const LeadsPage = () => {
         </div>
       )}
     </DashboardLayout>
-  )
-}
+  );
+};
 
-export default LeadsPage
+export default LeadsPage;
