@@ -26,12 +26,8 @@ const LeadsPage = () => {
       const token = localStorage.getItem("token");
 
       const [leadsResponse, managersResponse] = await Promise.all([
-        axiosInstance.get("/employer/leads", {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        axiosInstance.get("/employer/managers", {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
+        axiosInstance.get("/employer/leads"),
+        axiosInstance.get("/employer/managers")
       ]);
 
       setLeads(leadsResponse.data);
@@ -94,22 +90,10 @@ const LeadsPage = () => {
 
       if (currentLead) {
         // Update existing lead
-        await axiosInstance.put(
-          `/employer/leads/${currentLead._id}`,
-          formData,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        await axiosInstance.put(`/employer/leads/${currentLead._id}`, formData);
       } else {
         // Create new lead
-        await axiosInstance.post("/employer/leads", formData, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        await axiosInstance.post("/employer/leads", formData);
       }
 
       fetchData();
@@ -124,11 +108,7 @@ const LeadsPage = () => {
     if (window.confirm("Are you sure you want to delete this lead?")) {
       try {
         const token = localStorage.getItem("token");
-        await axiosInstance.delete(`/employer/leads/${leadId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        await axiosInstance.delete(`/employer/leads/${leadId}`);
 
         fetchData();
       } catch (err) {

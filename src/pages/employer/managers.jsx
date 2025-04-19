@@ -19,11 +19,7 @@ const ManagersPage = () => {
   const fetchManagers = async () => {
     try {
       const token = localStorage.getItem("token")
-      const response = await axiosInstance.get("/employer/managers", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+      const response = await axiosInstance.get("/employer/managers")
 
       setManagers(response.data)
       setLoading(false)
@@ -82,16 +78,9 @@ const ManagersPage = () => {
     try {
       if (currentManager) {
         await axiosInstance.put(
-          `/employer/managers/${currentManager._id}`,
-          payload,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+          `/employer/managers/${currentManager._id}`, payload);
       } else {
-        await axiosInstance.post(
-          "/employer/managers",
-          payload,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        await axiosInstance.post("/employer/managers", payload);
       }
       fetchManagers();
       closeModal();
@@ -106,11 +95,7 @@ const ManagersPage = () => {
     if (window.confirm("Are you sure you want to delete this manager?")) {
       try {
         const token = localStorage.getItem("token")
-        await axiosInstance.delete(`employer/managers/${managerId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
+        await axiosInstance.delete(`employer/managers/${managerId}`)
 
         fetchManagers()
       } catch (err) {

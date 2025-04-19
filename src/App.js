@@ -11,8 +11,11 @@ import LeadsPage from "./pages/employer/leads"
 // Manager Pages
 import ManagerLeadsPage from "./pages/manager/leads"
 
+// Shared Pages
+import ProfilePage from "./pages/profile/me"
+
 // Auth Guard Component
-const ProtectedRoute = ({ children, allowedRoles }) => {
+const ProtectedRoute = ({ children, allowedRoles }) => { 
   const token = localStorage.getItem("token")
 
   const getUserRole = () => {
@@ -85,6 +88,16 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={["manager"]}>
               <ManagerLeadsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Shared Routes */}
+        <Route
+          path="/profile/me"
+          element={
+            <ProtectedRoute allowedRoles={["employer", "manager"]}>
+              <ProfilePage />
             </ProtectedRoute>
           }
         />

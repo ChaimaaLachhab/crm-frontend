@@ -21,11 +21,7 @@ const ManagerLeadsPage = () => {
   const fetchLeads = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axiosInstance.get("/managers/leads", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await axiosInstance.get("/managers/leads");
 
       setLeads(response.data);
       setLoading(false);
@@ -43,15 +39,7 @@ const ManagerLeadsPage = () => {
   const handleStatusChange = async (leadId, newStatus) => {
     try {
       const token = localStorage.getItem("token");
-      await axiosInstance.patch(
-        `/managers/leads/${leadId}`,
-        { status: newStatus },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      await axiosInstance.patch(`/managers/leads/${leadId}`, { status: newStatus });
 
       // Update local state
       setLeads(
@@ -87,7 +75,7 @@ const ManagerLeadsPage = () => {
     switch (status) {
       case "PENDING":
         return <AlertTriangle className="h-5 w-5 text-blue-500" />;
-      case "in-IN_PROGRESS":
+      case "IN_PROGRESS":
         return <Clock className="h-5 w-5 text-yellow-500" />;
       case "COMPLETED":
         return <CheckCircle className="h-5 w-5 text-green-500" />;

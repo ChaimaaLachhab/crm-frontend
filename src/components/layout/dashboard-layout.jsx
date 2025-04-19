@@ -1,30 +1,35 @@
-import React, { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { Menu, X, ChevronDown, LogOut, LayoutDashboard, Users, FileText, User, Bell, Settings } from 'lucide-react';
+"use client"
+
+import { useState } from "react"
+import { useNavigate, useLocation } from "react-router-dom"
+import { Menu, X, LogOut, LayoutDashboard, Users, FileText, User, Bell, UserCircle } from "lucide-react"
 
 const DashboardLayout = ({ children, userRole }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const navigate = useNavigate();
-  const location = useLocation();
-  
-  const isEmployer = userRole === "employer";
-  
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const navigate = useNavigate()
+  const location = useLocation()
+
+  const isEmployer = userRole === "employer"
+
   const employerLinks = [
     { name: "Dashboard", href: "/employer/dashboard", icon: <LayoutDashboard className="w-5 h-5" /> },
     { name: "Managers", href: "/employer/managers", icon: <Users className="w-5 h-5" /> },
     { name: "Leads", href: "/employer/leads", icon: <FileText className="w-5 h-5" /> },
-  ];
-  
+    { name: "Mon Profil", href: "/profile/me", icon: <UserCircle className="w-5 h-5" /> },
+  ]
+
   const managerLinks = [
     { name: "Leads", href: "/manager/leads", icon: <FileText className="w-5 h-5" /> },
-  ];
-  
-  const links = isEmployer ? employerLinks : managerLinks;
-  
+    { name: "Mon Profil", href: "/profile/me", icon: <UserCircle className="w-5 h-5" /> },
+  ]
+
+  const links = isEmployer ? employerLinks : managerLinks
+
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/login");
-  };
+    localStorage.removeItem("token")
+    localStorage.removeItem("userRole")
+    navigate("/login")
+  }
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -40,11 +45,11 @@ const DashboardLayout = ({ children, userRole }) => {
               <X className="w-6 h-6 text-gray-600" />
             </button>
           </div>
-          
+
           <div className="flex items-center flex-shrink-0 px-4">
             <span className="text-xl font-bold text-blue-600">CRM System</span>
           </div>
-          
+
           <div className="flex flex-col flex-1 mt-5">
             <nav className="flex-1 px-2 space-y-1 bg-white">
               {links.map((item) => (
@@ -63,12 +68,9 @@ const DashboardLayout = ({ children, userRole }) => {
               ))}
             </nav>
           </div>
-          
+
           <div className="flex flex-shrink-0 p-4 border-t border-gray-200">
-            <button
-              onClick={handleLogout}
-              className="flex items-center w-full text-gray-600 hover:text-gray-900"
-            >
+            <button onClick={handleLogout} className="flex items-center w-full text-gray-600 hover:text-gray-900">
               <LogOut className="w-5 h-5" />
               <span className="ml-3">Logout</span>
             </button>
@@ -84,7 +86,7 @@ const DashboardLayout = ({ children, userRole }) => {
               <div className="flex items-center flex-shrink-0 px-4">
                 <span className="text-xl font-bold text-blue-600">CRM System</span>
               </div>
-              
+
               <nav className="flex-1 mt-5 px-2 space-y-1 bg-white">
                 {links.map((item) => (
                   <a
@@ -102,7 +104,7 @@ const DashboardLayout = ({ children, userRole }) => {
                 ))}
               </nav>
             </div>
-            
+
             <div className="flex flex-shrink-0 p-4 border-t border-gray-200">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -111,13 +113,8 @@ const DashboardLayout = ({ children, userRole }) => {
                   </div>
                 </div>
                 <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-700">
-                    {isEmployer ? "Employer" : "Manager"}
-                  </p>
-                  <button
-                    onClick={handleLogout}
-                    className="text-xs font-medium text-gray-500 hover:text-gray-700"
-                  >
+                  <p className="text-sm font-medium text-gray-700">{isEmployer ? "Employer" : "Manager"}</p>
+                  <button onClick={handleLogout} className="text-xs font-medium text-gray-500 hover:text-gray-700">
                     Logout
                   </button>
                 </div>
@@ -137,14 +134,14 @@ const DashboardLayout = ({ children, userRole }) => {
           >
             <Menu className="w-6 h-6" />
           </button>
-          
+
           <div className="flex justify-between flex-1 px-4">
             <div className="flex flex-1">
               <h1 className="text-xl font-semibold text-gray-900 my-auto">
-                {links.find(link => link.href === location.pathname)?.name || "Dashboard"}
+                {links.find((link) => link.href === location.pathname)?.name || "Dashboard"}
               </h1>
             </div>
-            
+
             <div className="flex items-center ml-4 md:ml-6">
               <button className="p-1 text-gray-400 bg-white rounded-full hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <Bell className="w-6 h-6" />
@@ -152,11 +149,14 @@ const DashboardLayout = ({ children, userRole }) => {
 
               <div className="relative ml-3">
                 <div>
-                  <button className="flex items-center max-w-xs text-sm bg-white rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <a
+                    href="/profile/me"
+                    className="flex items-center max-w-xs text-sm bg-white rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
                     <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
                       <User className="w-5 h-5 text-gray-600" />
                     </div>
-                  </button>
+                  </a>
                 </div>
               </div>
             </div>
@@ -166,14 +166,12 @@ const DashboardLayout = ({ children, userRole }) => {
         {/* Main content area */}
         <main className="relative flex-1 overflow-y-auto focus:outline-none">
           <div className="py-6">
-            <div className="px-4 mx-auto max-w-7xl sm:px-6 md:px-8">
-              {children}
-            </div>
+            <div className="px-4 mx-auto max-w-7xl sm:px-6 md:px-8">{children}</div>
           </div>
         </main>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default DashboardLayout;
+export default DashboardLayout

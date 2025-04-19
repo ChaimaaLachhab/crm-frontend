@@ -1,3 +1,5 @@
+"use client"
+
 import { useState, useEffect } from "react"
 import axios from "axios"
 import DashboardLayout from "../../components/layout/dashboard-layout"
@@ -36,6 +38,30 @@ const StatCard = ({ title, value, icon, color }) => {
   )
 }
 
+// Données fictives pour les tests
+const mockData = {
+  leadsInProgress: 24,
+  leadsCompleted: 45,
+  leadsCanceled: 12,
+  totalManagers: 8,
+  totalLeads: 81,
+  monthlyLeads: {
+    jan: 15,
+    feb: 22,
+    mar: 18,
+    apr: 30,
+    may: 25,
+    jun: 28,
+  },
+  // Données supplémentaires pour les graphiques
+  managerPerformance: [
+    { name: "Alice", completed: 12, inProgress: 5 },
+    { name: "Bob", completed: 8, inProgress: 7 },
+    { name: "Charlie", completed: 15, inProgress: 3 },
+    { name: "David", completed: 10, inProgress: 9 },
+  ],
+}
+
 const EmployerDashboard = () => {
   const [stats, setStats] = useState({
     leadsInProgress: 0,
@@ -50,35 +76,56 @@ const EmployerDashboard = () => {
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [useMockData, setUseMockData] = useState(false)
 
   useEffect(() => {
     const fetchDashboardStats = async () => {
       try {
-        const token = localStorage.getItem("token")
-        const response = await axios.get("http://localhost:5001/api/employer/dashboard-stats", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        let data
+
+        if (useMockData) {
+          // Utiliser les données fictives
+          data = mockData
+        } else {
+          // Essayer de récupérer les données réelles
+          try {
+            const token = localStorage.getItem("token")
+            const response = await axios.get("http://localhost:5001/api/employer/dashboard-stats", {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            })
+            data = response.data
+          } catch (apiError) {
+            console.error("Error fetching real data, falling back to mock data:", apiError)
+            data = mockData
+            setUseMockData(true)
+          }
+        }
+
+        setStats({
+          leadsInProgress: data.leadsInProgress,
+          leadsCompleted: data.leadsCompleted,
+          leadsCanceled: data.leadsCanceled,
+          totalManagers: data.totalManagers,
+          totalLeads: data.totalLeads,
         })
 
-        setStats(response.data)
-
         // Préparer les données pour le graphique à barres
-        // Supposons que l'API renvoie des données mensuelles ou que nous les formatons ici
         const barData = [
-          { name: "Jan", leads: response.data.monthlyLeads?.jan || Math.floor(Math.random() * 50) },
-          { name: "Fév", leads: response.data.monthlyLeads?.feb || Math.floor(Math.random() * 50) },
-          { name: "Mar", leads: response.data.monthlyLeads?.mar || Math.floor(Math.random() * 50) },
-          { name: "Avr", leads: response.data.monthlyLeads?.apr || Math.floor(Math.random() * 50) },
-          { name: "Mai", leads: response.data.monthlyLeads?.may || Math.floor(Math.random() * 50) },
-          { name: "Juin", leads: response.data.monthlyLeads?.jun || Math.floor(Math.random() * 50) },
+          { name: "Jan", leads: data.monthlyLeads?.jan || 0 },
+          { name: "Fév", leads: data.monthlyLeads?.feb || 0 },
+          { name: "Mar", leads: data.monthlyLeads?.mar || 0 },
+          { name: "Avr", leads: data.monthlyLeads?.apr || 0 },
+          { name: "Mai", leads: data.monthlyLeads?.may || 0 },
+          { name: "Juin", leads: data.monthlyLeads?.jun || 0 },
         ]
 
         // Préparer les données pour le graphique circulaire
         const pieData = [
-          { name: "En cours", value: response.data.leadsInProgress, color: "#FBBF24" },
-          { name: "Complétés", value: response.data.leadsCompleted, color: "#10B981" },
-          { name: "Annulés", value: response.data.leadsCanceled, color: "#EF4444" },
+          { name: "En cours", value: data.leadsInProgress, color: "#FBBF24" },
+          { name: "Complétés", value: data.leadsCompleted, color: "#10B981" },
+          { name: "Annulés", value: data.leadsCanceled, color: "#EF4444" },
         ]
 
         setChartData({
@@ -95,7 +142,7 @@ const EmployerDashboard = () => {
     }
 
     fetchDashboardStats()
-  }, [])
+  }, [useMockData])
 
   const COLORS = ["#FBBF24", "#10B981", "#EF4444"]
 
@@ -132,7 +179,14 @@ const EmployerDashboard = () => {
   return (
     <DashboardLayout userRole="employer">
       <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-gray-900">Dashboard Overview</h2>
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold text-gray-900">Dashboard Overview</h2>
+          {useMockData && (
+            <div className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium">
+              Utilisation de données fictives
+            </div>
+          )}
+        </div>
 
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           <StatCard
